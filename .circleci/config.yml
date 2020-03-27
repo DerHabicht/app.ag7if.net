@@ -1,0 +1,49 @@
+defaults: &defaults
+  working_directory: ~/repo
+version: 2
+jobs:
+  build:
+    <<: *defaults
+    docker:
+      - image: circleci/node:10.15.2
+    steps:
+      - checkout
+      - restore_cache:
+          key: v1-yarn-{{ checksum "yarn.lock" }}
+      - run:
+          name: Yarn Install
+          command: yarn install
+      - save_cache:
+          key: v1-yarn-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+      - run:
+          name: Yarn Build
+          command: yarn build
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - dist
+  deploy:
+    <<: *defaults
+    docker:
+      - image: circleci/node:10.15.2
+    steps:
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Copy deploy artifacts to server
+          command: |
+            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST -C 'rm -rf /www/app.ag7if.net'
+            scp -o StrictHostKeyChecking=no -r dist/ $SSH_USER@$SSH_HOST:/www/app.ag7if.net/
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
