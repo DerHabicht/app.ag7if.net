@@ -34,8 +34,8 @@ jobs:
       - run:
           name: Copy deploy artifacts to server
           command: |
-            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST -C 'rm -rf /www/app.ag7if.net'
-            scp -o StrictHostKeyChecking=no -r dist/ $SSH_USER@$SSH_HOST:/www/app.ag7if.net/
+            ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST -C "rm -rf $DEPLOY_DIR"
+            scp -o StrictHostKeyChecking=no -r dist/ $SSH_USER@$SSH_HOST:$DEPLOY_DIR
 workflows:
   version: 2
   build-test-deploy:
